@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>新潟直送計画 振込価格シミュレーション</title>
+<title>振込価格シミュレーター</title>
 <style>
 *{box-sizing:border-box;}
 body{margin:0;padding:16px;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:#f5f5f5;color:#222;max-width:720px;margin:0 auto;}
@@ -32,8 +32,9 @@ input:focus,select:focus{border-color:#185FA5;}
 .cool-btn.active{background:#185FA5;color:#fff;font-weight:700;font-size:15px;}
 .add-btn{font-size:14px;color:#185FA5;background:none;border:none;cursor:pointer;padding:4px 0;}
 .result-sku-block{margin-bottom:1.25rem;}
-.result-sku-name{font-size:15px;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
-.result-table{width:100%;border-collapse:collapse;font-size:14px;}
+.result-sku-name{font-size:15px;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.result-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.result-table{width:100%;border-collapse:collapse;font-size:14px;min-width:480px;}
 .result-table th{font-size:13px;font-weight:500;color:#666;padding:6px 8px;text-align:left;border-bottom:1px solid #eee;white-space:nowrap;}
 .result-table td{padding:7px 8px;border-bottom:1px solid #eee;white-space:nowrap;}
 .result-table tr:last-child td{border-bottom:none;}
@@ -65,7 +66,7 @@ input:focus,select:focus{border-color:#185FA5;}
 </style>
 </head>
 <body>
-<h2>新潟直送計画 振込価格シミュレーション</h2>
+<h2>振込価格シミュレーター</h2>
 
 <div class="toggle">
   <button class="toggle-btn active" id="btn-f" onclick="setMode('forward')">販売価格 → 手取額計算</button>
@@ -111,7 +112,7 @@ function setMode(m) {
   mode = m;
   document.getElementById("btn-f").classList.toggle("active", m === "forward");
   document.getElementById("btn-r").classList.toggle("active", m === "reverse");
-  document.querySelectorAll(".price-label").forEach(el => el.textContent = m === "forward" ? "販売価格（円／税込・送料込）" : "手取額目標（円／税込）");
+  document.querySelectorAll(".price-label").forEach(el => el.textContent = m === "forward" ? "販売価格（円）" : "手取額目標（円）");
   calc();
 }
 
@@ -123,7 +124,7 @@ function addSku() {
     '<div class="sku-card-header"><span class="sku-label">SKU ' + id + '</span><button class="del-btn" onclick="delSku(' + id + ')">×</button></div>' +
     '<div class="sku-grid">' +
     '<div class="field" style="grid-column:1/-1;"><label>SKU名<span class="req">*</span></label><input type="text" placeholder="例：直送農園 米2kg" id="sname-' + id + '" oninput="calc()"></div>' +
-    '<div class="field"><label class="price-label">' + (mode === "forward" ? "販売価格（円／税込・送料込）" : "手取額目標（円／税込）") + '<span class="req">*</span></label>' +
+    '<div class="field"><label class="price-label">' + (mode === "forward" ? "販売価格（円）" : "手取額目標（円）") + '<span class="req">*</span></label>' +
     '<input type="number" placeholder="例：3950" id="sprice-' + id + '" min="10" step="10" oninput="onPriceInput(' + id + ')" required>' +
     '<div class="price-err" id="perr-' + id + '"></div></div>' +
     '<div class="field"><label>配送タイプ<span class="req">*</span></label>' +
@@ -219,7 +220,7 @@ function calc() {
       tr.innerHTML = "<td>" + area.label + "</td><td style='color:#999'>" + fmt(s) + "</td><td>" + priceDisp + "</td><td class='" + cls(c) + "'>" + fmt(c) + (c < MIN_TENOKOR ? " ⚠️" : "") + "</td><td class='" + cls(m) + "'>" + fmt(m) + (m < MIN_TENOKOR ? " ⚠️" : "") + "</td>";
       tbody.appendChild(tr);
     });
-    table.appendChild(tbody); block.appendChild(table);
+    table.appendChild(tbody); const wrap = document.createElement("div"); wrap.className = "result-table-wrap"; wrap.appendChild(table); block.appendChild(wrap);
     if (i < skus.length - 1) { const hr = document.createElement("hr"); hr.className = "divider"; block.appendChild(hr); }
     container.appendChild(block);
   });
