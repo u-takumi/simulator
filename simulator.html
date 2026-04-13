@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>振込価格シミュレーター</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;padding:16px;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:#f5f5f5;color:#222;max-width:720px;margin:0 auto;}
+h2{font-size:18px;font-weight:500;margin:0 0 1.25rem;padding-top:1rem;}
+label{display:block;font-size:12px;color:#666;margin-bottom:3px;}
+input,select{width:100%;font-size:13px;padding:7px 10px;border:1px solid #ccc;border-radius:6px;outline:none;}
+input:focus,select:focus{border-color:#185FA5;}
+.card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:1rem 1.25rem;margin-bottom:12px;}
+.sec{font-size:11px;font-weight:600;color:#999;letter-spacing:.06em;text-transform:uppercase;margin:1rem 0 .5rem;}
+.sec:first-child{margin-top:0;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.field{margin-bottom:10px;}
+.req{color:#e53e3e;margin-left:2px;}
+.toggle{display:flex;gap:0;margin-bottom:1.25rem;border-radius:8px;overflow:hidden;border:2px solid #185FA5;}
+.toggle-btn{flex:1;padding:10px 12px;font-size:13px;font-weight:400;border:none;background:#fff;color:#185FA5;cursor:pointer;}
+.toggle-btn:not(:last-child){border-right:2px solid #185FA5;}
+.toggle-btn.active{background:#185FA5;color:#fff;font-weight:600;}
+.sku-card{border:1px solid #ddd;border-radius:8px;padding:.75rem 1rem;margin-bottom:10px;}
+.sku-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;}
+.sku-label{font-size:12px;font-weight:500;color:#666;}
+.del-btn{font-size:18px;color:#999;background:none;border:none;cursor:pointer;padding:0 2px;}
+.sku-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cool-toggle{display:flex;gap:0;border-radius:6px;overflow:hidden;border:2px solid #185FA5;}
+.cool-btn{flex:1;padding:6px 8px;font-size:12px;font-weight:400;border:none;background:#fff;color:#185FA5;cursor:pointer;}
+.cool-btn:not(:last-child){border-right:2px solid #185FA5;}
+.cool-btn.active{background:#185FA5;color:#fff;font-weight:700;font-size:13px;}
+.add-btn{font-size:12px;color:#185FA5;background:none;border:none;cursor:pointer;padding:4px 0;}
+.result-sku-block{margin-bottom:1.25rem;}
+.result-sku-name{font-size:13px;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.result-table{width:100%;border-collapse:collapse;font-size:13px;}
+.result-table th{font-size:11px;font-weight:500;color:#666;padding:6px 8px;text-align:left;border-bottom:1px solid #eee;white-space:nowrap;}
+.result-table td{padding:7px 8px;border-bottom:1px solid #eee;white-space:nowrap;}
+.result-table tr:last-child td{border-bottom:none;}
+.result-table tr.avg-row td{background:#EEF4FB;font-weight:500;}
+.pos{color:#1a7a1a;font-weight:500;}
+.neg{color:#cc0000;font-weight:500;}
+.tag-c{display:inline-block;font-size:10px;padding:1px 5px;border-radius:3px;background:#dbeafe;color:#1d4ed8;white-space:nowrap;}
+.tag-m{display:inline-block;font-size:10px;padding:1px 5px;border-radius:3px;background:#fef3c7;color:#92400e;white-space:nowrap;}
+.alert-box{border-radius:8px;padding:.75rem 1rem;margin-top:10px;font-size:12px;line-height:1.7;display:none;}
+.alert-box.warn{background:#FFF3CD;border:1px solid #FBBF24;color:#7C5700;}
+.alert-box.danger{background:#FEE2E2;border:1px solid #F87171;color:#7F1D1D;}
+.alert-box ul{margin:4px 0 0 0;padding-left:1.2em;}
+.alert-box li{margin-bottom:2px;}
+.outline-btn{width:100%;padding:11px;font-size:14px;font-weight:500;background:transparent;color:#222;border:1px solid #ccc;border-radius:8px;cursor:pointer;margin-top:.75rem;}
+.outline-btn:disabled{opacity:.4;cursor:not-allowed;}
+.pdf-btn{width:100%;padding:11px;font-size:14px;font-weight:500;background:#185FA5;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-top:.5rem;}
+.csv-btn{width:100%;padding:11px;font-size:14px;font-weight:500;background:#2d7a2d;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-top:.5rem;}
+.confirm-sec{display:none;margin-top:1rem;border-top:1px solid #eee;padding-top:1rem;}
+.note{font-size:11px;color:#999;line-height:1.6;margin-top:6px;}
+.price-err{font-size:11px;color:#cc0000;margin-top:3px;display:none;}
+.hint{font-size:11px;color:#999;margin-top:3px;}
+.divider{border:none;border-top:1px solid #eee;margin:1rem 0;}
+@media(max-width:480px){
+  .g2{grid-template-columns:1fr;}
+  .sku-grid{grid-template-columns:1fr;}
+  .result-table{font-size:11px;}
+  .result-table th,.result-table td{padding:5px 4px;}
+}
+</style>
+</head>
+<body>
+<h2>振込価格シミュレーター</h2>
+
+<div class="toggle">
+  <button class="toggle-btn active" id="btn-f" onclick="setMode('forward')">販売価格 → 手残り計算</button>
+  <button class="toggle-btn" id="btn-r" onclick="setMode('reverse')">手残り目標 → 販売価格を逆算</button>
+</div>
+
+<div class="card">
+  <div class="sec">基本情報</div>
+  <div class="g2">
+    <div class="field"><label>店舗名<span class="req">*</span></label><input type="text" id="shop-name" placeholder="例：直送農園" oninput="calc()"></div>
+    <div class="field"><label>担当者メールアドレス</label><input type="email" id="email" placeholder="例：shop@example.com"></div>
+  </div>
+  <div class="sec">SKU情報</div>
+  <div id="sku-list"></div>
+  <div class="hint" style="margin-bottom:6px;">販売価格は10円単位で設定してください（例：3,950円・5,410円）</div>
+  <button class="add-btn" onclick="addSku()">+ SKUを追加</button>
+</div>
+
+<div class="card" id="result-area" style="display:none;">
+  <div class="sec">計算結果</div>
+  <div id="result-body"></div>
+  <div class="note" id="result-note"></div>
+  <div class="alert-box danger" id="alert-warn"><strong>⚠️ 価格を確定できません</strong><ul id="alert-warn-list"></ul></div>
+  <div class="alert-box warn" id="alert-empty"><strong>📋 未入力の項目があります</strong><ul id="alert-empty-list"></ul></div>
+  <div id="confirm-sec" class="confirm-sec">
+    <div class="sec">ダウンロード</div>
+    <div class="field"><label>備考・コメント</label><input type="text" id="comment" placeholder="任意"></div>
+    <button class="pdf-btn" onclick="doPdf()">📄 PDFをダウンロード（事務局への送付用）</button>
+    <button class="csv-btn" onclick="doCsv()">📊 CSVをダウンロード（事務局の内部作業用）</button>
+    <p class="note">PDFを事務局（uda@cunelwork.co.jp）にメールまたはLINEでお送りください。</p>
+  </div>
+  <button class="outline-btn" id="confirm-btn" onclick="showConfirm()">価格を確定してダウンロードする</button>
+</div>
+
+<script>
+const SHIP_NORMAL = {"60":{avg:885,south:803,north:968,west:1023,far:1188},"80":{avg:958,south:869,north:1045,west:1111,far:1287},"100":{avg:1041,south:946,north:1133,west:1210,far:1397},"120":{avg:1149,south:1056,north:1210,west:1298,far:1540},"140":{avg:1277,south:1199,north:1298,west:1397,far:1650},"160":{avg:1370,south:1287,north:1441,west:1540,far:1683}};
+const SHIP_COOL   = {"60":{avg:1160,south:1078,north:1243,west:1298,far:1463},"80":{avg:1288,south:1199,north:1375,west:1441,far:1617},"100":{avg:1481,south:1386,north:1573,west:1650,far:1837},"120":{avg:1864,south:1771,north:1925,west:2013,far:2255}};
+const AREAS = [{key:"avg",label:"平均（全国）"},{key:"south",label:"南東北〜中部"},{key:"north",label:"北東北・関西"},{key:"west",label:"中国・四国"},{key:"far",label:"北海道・九州"}];
+const MIN_TENOKOR = 151;
+let mode = "forward", skuCount = 0;
+
+function setMode(m) {
+  mode = m;
+  document.getElementById("btn-f").classList.toggle("active", m === "forward");
+  document.getElementById("btn-r").classList.toggle("active", m === "reverse");
+  document.querySelectorAll(".price-label").forEach(el => el.textContent = m === "forward" ? "販売価格（円）" : "手残り目標（円）");
+  calc();
+}
+
+function addSku() {
+  skuCount++; const id = skuCount;
+  const div = document.createElement("div");
+  div.className = "sku-card"; div.id = "sku-" + id; div._isCool = false;
+  div.innerHTML =
+    '<div class="sku-card-header"><span class="sku-label">SKU ' + id + '</span><button class="del-btn" onclick="delSku(' + id + ')">×</button></div>' +
+    '<div class="sku-grid">' +
+    '<div class="field" style="grid-column:1/-1;"><label>SKU名<span class="req">*</span></label><input type="text" placeholder="例：直送農園 米2kg" id="sname-' + id + '" oninput="calc()"></div>' +
+    '<div class="field"><label class="price-label">' + (mode === "forward" ? "販売価格（円）" : "手残り目標（円）") + '<span class="req">*</span></label>' +
+    '<input type="number" placeholder="例：3950" id="sprice-' + id + '" min="10" step="10" oninput="onPriceInput(' + id + ')" required>' +
+    '<div class="price-err" id="perr-' + id + '"></div></div>' +
+    '<div class="field"><label>配送タイプ<span class="req">*</span></label>' +
+    '<div class="cool-toggle"><button class="cool-btn active" id="btn-normal-' + id + '" onclick="setCool(' + id + ',false)">常温便</button>' +
+    '<button class="cool-btn" id="btn-cool-' + id + '" onclick="setCool(' + id + ',true)">❄️ クール便</button></div></div>' +
+    '<div class="field"><label>梱包サイズ<span class="req">*</span></label>' +
+    '<select id="ssize-' + id + '" onchange="onPriceInput(' + id + ')">' +
+    '<option value="60">60サイズ</option><option value="80">80サイズ</option><option value="100">100サイズ</option>' +
+    '<option value="120">120サイズ</option><option value="140">140サイズ（常温のみ）</option><option value="160">160サイズ（常温のみ）</option>' +
+    '</select></div></div>';
+  document.getElementById("sku-list").appendChild(div);
+  updateDelBtns(); calc();
+}
+
+function setCool(id, c) {
+  const card = document.getElementById("sku-" + id); card._isCool = c;
+  document.getElementById("btn-normal-" + id).classList.toggle("active", !c);
+  document.getElementById("btn-cool-" + id).classList.toggle("active", c);
+  const sel = document.getElementById("ssize-" + id);
+  for (let o of sel.options) o.disabled = c && (o.value === "140" || o.value === "160");
+  if (c && (sel.value === "140" || sel.value === "160")) sel.value = "120";
+  onPriceInput(id);
+}
+
+function getShipTbl(id) { const card = document.getElementById("sku-" + id); return (card && card._isCool) ? SHIP_COOL : SHIP_NORMAL; }
+function minTenokorForSku(price, id) {
+  const tbl = getShipTbl(id), sz = document.getElementById("ssize-" + id).value || "60", ship = tbl[sz] || tbl["60"];
+  let min = Infinity;
+  AREAS.forEach(a => { min = Math.min(min, price * 0.8 - ship[a.key], price * 0.75 - ship[a.key]); });
+  return min;
+}
+function calcMinPriceForSku(id) {
+  const tbl = getShipTbl(id), sz = document.getElementById("ssize-" + id).value || "60", ship = tbl[sz] || tbl["60"];
+  return Math.ceil((MIN_TENOKOR + Math.max(...Object.values(ship))) / 0.75 / 10) * 10;
+}
+function onPriceInput(id) {
+  const el = document.getElementById("sprice-" + id), errEl = document.getElementById("perr-" + id), val = parseInt(el.value);
+  let bc = "", msg = "";
+  if (val && val % 10 !== 0) { bc = "#e53e3e"; msg = "10円単位で入力してください"; }
+  else if (val && val > 0 && minTenokorForSku(val, id) < MIN_TENOKOR) { bc = "#e53e3e"; msg = "手残りが振込手数料を下回るケースがあります。最低販売価格の目安は約" + calcMinPriceForSku(id) + "円です。"; }
+  el.style.borderColor = bc || "#ccc"; errEl.textContent = msg; errEl.style.display = msg ? "block" : "none";
+  calc();
+}
+function delSku(id) { document.getElementById("sku-" + id)?.remove(); updateDelBtns(); calc(); }
+function updateDelBtns() {
+  const cards = document.querySelectorAll("#sku-list .sku-card");
+  cards.forEach(c => { const btn = c.querySelector(".del-btn"); if (btn) btn.style.visibility = cards.length === 1 ? "hidden" : "visible"; });
+}
+function getSkus() {
+  return Array.from(document.querySelectorAll("#sku-list .sku-card")).map(card => {
+    const id = card.id.replace("sku-", "");
+    return { id, name: document.getElementById("sname-" + id).value, price: parseFloat(document.getElementById("sprice-" + id).value), isCool: card._isCool || false, size: document.getElementById("ssize-" + id).value };
+  }).filter(s => s.name && s.price > 0 && s.price % 10 === 0);
+}
+function getAllSkuCards() {
+  return Array.from(document.querySelectorAll("#sku-list .sku-card")).map(card => {
+    const id = card.id.replace("sku-", "");
+    return { id, name: document.getElementById("sname-" + id).value, price: document.getElementById("sprice-" + id).value };
+  });
+}
+function fmt(n) { return Math.round(n).toLocaleString("ja-JP") + "円"; }
+function cls(n) { return n >= 0 ? "pos" : "neg"; }
+function hasAnyPriceError() { return !!document.querySelector(".price-err[style*='block']"); }
+function hasEmptyRequired() {
+  if (!document.getElementById("shop-name").value.trim()) return true;
+  return getAllSkuCards().some(s => !s.name || !s.price);
+}
+
+function calc() {
+  const skus = getSkus();
+  updateAlerts(skus, false);
+  if (!skus.length) { document.getElementById("result-area").style.display = "none"; return; }
+  document.getElementById("result-area").style.display = "block";
+  const container = document.getElementById("result-body"); container.innerHTML = "";
+  let anyWarn = false;
+  skus.forEach((sku, i) => {
+    const tbl = sku.isCool ? SHIP_COOL : SHIP_NORMAL, ship = tbl[sku.size] || tbl["60"];
+    const block = document.createElement("div"); block.className = "result-sku-block";
+    const nameEl = document.createElement("div"); nameEl.className = "result-sku-name";
+    nameEl.innerHTML = "<strong>" + sku.name + "</strong><span style='font-size:11px;color:#999'>" + (sku.isCool ? "❄️ クール便" : "📦 常温便") + " / " + sku.size + "サイズ</span>";
+    block.appendChild(nameEl);
+    const table = document.createElement("table"); table.className = "result-table";
+    table.innerHTML = "<thead><tr><th>エリア</th><th>送料</th><th>" + (mode === "forward" ? "販売価格" : "必要販売価格") + "</th><th><span class='tag-c'>本体サイト経由</span> 手残り</th><th><span class='tag-m'>楽天等モール経由</span> 手残り</th></tr></thead>";
+    const tbody = document.createElement("tbody");
+    AREAS.forEach(area => {
+      const s = ship[area.key];
+      let c, m, priceDisp;
+      if (mode === "forward") { c = sku.price * 0.8 - s; m = sku.price * 0.75 - s; priceDisp = fmt(sku.price); }
+      else { c = (sku.price + s) / 0.8; m = (sku.price + s) / 0.75; priceDisp = fmt(Math.ceil(m / 10) * 10); }
+      if (c < MIN_TENOKOR || m < MIN_TENOKOR) anyWarn = true;
+      const tr = document.createElement("tr");
+      if (area.key === "avg") tr.className = "avg-row";
+      tr.innerHTML = "<td>" + area.label + "</td><td style='color:#999'>" + fmt(s) + "</td><td>" + priceDisp + "</td><td class='" + cls(c) + "'>" + fmt(c) + (c < MIN_TENOKOR ? " ⚠️" : "") + "</td><td class='" + cls(m) + "'>" + fmt(m) + (m < MIN_TENOKOR ? " ⚠️" : "") + "</td>";
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody); block.appendChild(table);
+    if (i < skus.length - 1) { const hr = document.createElement("hr"); hr.className = "divider"; block.appendChild(hr); }
+    container.appendChild(block);
+  });
+  document.getElementById("result-note").textContent = "本体サイト経由 手数料20% / 楽天等モール経由 手数料25%";
+  updateAlerts(skus, anyWarn);
+  const blocked = anyWarn || hasAnyPriceError() || hasEmptyRequired();
+  const btn = document.getElementById("confirm-btn");
+  btn.disabled = blocked; btn.style.opacity = blocked ? "0.4" : "1";
+}
+
+function updateAlerts(skus, anyWarn) {
+  const emptyItems = [];
+  if (!document.getElementById("shop-name").value.trim()) emptyItems.push("店舗名");
+  getAllSkuCards().forEach(s => {
+    if (!s.name) emptyItems.push("SKU " + s.id + "：SKU名");
+    if (!s.price) emptyItems.push("SKU " + s.id + "：販売価格");
+  });
+  const ae = document.getElementById("alert-empty");
+  document.getElementById("alert-empty-list").innerHTML = emptyItems.map(t => "<li>" + t + "</li>").join("");
+  ae.style.display = emptyItems.length ? "block" : "none";
+  const aw = document.getElementById("alert-warn");
+  if (anyWarn) {
+    const warnSkus = skus.filter(sku => {
+      const tbl = sku.isCool ? SHIP_COOL : SHIP_NORMAL, ship = tbl[sku.size] || tbl["60"];
+      return AREAS.some(a => sku.price * 0.8 - ship[a.key] < MIN_TENOKOR || sku.price * 0.75 - ship[a.key] < MIN_TENOKOR);
+    });
+    document.getElementById("alert-warn-list").innerHTML = warnSkus.map(s => "<li>" + s.name + "：一部エリアで手残りが振込手数料（151円）を下回るため価格を確定できません</li>").join("");
+    aw.style.display = "block";
+  } else { aw.style.display = "none"; }
+}
+
+function showConfirm() {
+  if (document.getElementById("confirm-btn").disabled) return;
+  document.getElementById("confirm-sec").style.display = "block";
+  document.getElementById("confirm-sec").scrollIntoView({ behavior: "smooth" });
+}
+
+// ============================================================
+// PDF生成（ブラウザ印刷方式・日本語対応）
+// ============================================================
+function doPdf() {
+  const shop    = document.getElementById("shop-name").value || "店舗";
+  const email   = document.getElementById("email").value || "";
+  const comment = document.getElementById("comment").value || "";
+  const skus    = getSkus();
+  const now     = new Date().toLocaleString("ja-JP", {timeZone:"Asia/Tokyo"});
+  const AK      = ["avg","south","north","west","far"];
+  const AL      = ["平均（全国）","南東北〜中部","北東北・関西","中国・四国","北海道・九州"];
+
+  let skuBlocks = "";
+  skus.forEach((sku, idx) => {
+    const tbl = sku.isCool ? SHIP_COOL : SHIP_NORMAL, ship = tbl[sku.size] || tbl["60"];
+    let rows = "";
+    // 送料行
+    rows += "<tr><td class='label'>送料</td><td class='ch'>直送計画</td>";
+    AK.forEach(key => { rows += "<td>" + ship[key].toLocaleString() + "円</td>"; });
+    rows += "</tr>";
+    // 直送手残り行
+    rows += "<tr><td class='label'>手残り</td><td class='ch'>直送計画</td>";
+    AK.forEach(key => {
+      const v = Math.round(sku.price * 0.8 - ship[key]);
+      rows += "<td class='" + (v < MIN_TENOKOR ? "warn" : "choku") + "'>" + v.toLocaleString() + "円</td>";
+    });
+    rows += "</tr>";
+    // モール手残り行
+    rows += "<tr><td class='label'>手残り</td><td class='ch'>楽天・Yahoo!</td>";
+    AK.forEach(key => {
+      const v = Math.round(sku.price * 0.75 - ship[key]);
+      rows += "<td class='" + (v < MIN_TENOKOR ? "warn" : "mall") + "'>" + v.toLocaleString() + "円</td>";
+    });
+    rows += "</tr>";
+
+    skuBlocks += `
+      <div class="sku-block">
+        <div class="sku-title">${idx+1}. ${sku.name}
+          <span class="sku-sub">${sku.isCool ? "❄️ クール便" : "常温便"} / ${sku.size}サイズ / 販売価格 ${sku.price.toLocaleString()}円</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px"></th>
+              <th style="width:80px">受注経路</th>
+              ${AL.map(l => `<th>${l}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  });
+
+  const html = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>振込価格表_${shop}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; font-size: 11px; color: #222; padding: 16px; }
+  h1 { font-size: 16px; color: #185FA5; border-bottom: 2px solid #185FA5; padding-bottom: 6px; margin-bottom: 10px; }
+  .meta { font-size: 11px; color: #555; margin-bottom: 14px; line-height: 1.8; }
+  .sku-block { margin-bottom: 18px; }
+  .sku-title { font-size: 13px; font-weight: bold; color: #185FA5; margin-bottom: 5px; }
+  .sku-sub { font-size: 10px; font-weight: normal; color: #666; margin-left: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  th { background: #185FA5; color: #fff; padding: 5px 6px; text-align: center; border: 1px solid #1050a0; }
+  td { padding: 5px 6px; border: 1px solid #ccc; text-align: right; }
+  td.label { text-align: center; background: #f0f4f8; font-weight: bold; }
+  td.ch { text-align: center; font-size: 10px; }
+  td.choku { background: #D6E3BC; font-weight: bold; }
+  td.mall  { background: #FFFFCC; }
+  td.warn  { background: #FFE0E0; color: #cc0000; font-weight: bold; }
+  .footer { font-size: 9px; color: #888; margin-top: 12px; border-top: 1px solid #ddd; padding-top: 6px; }
+  @media print {
+    body { padding: 8px; }
+    @page { size: A4 landscape; margin: 10mm; }
+  }
+</style>
+</head>
+<body>
+<h1>振込価格表</h1>
+<div class="meta">
+  <strong>店舗名：</strong>${shop}　
+  ${email ? `<strong>メール：</strong>${email}　` : ""}
+  <strong>作成日時：</strong>${now}
+  ${comment ? `<br><strong>備考：</strong>${comment}` : ""}
+</div>
+${skuBlocks}
+<div class="footer">
+  ※ 本体サイト経由（直送計画）手数料20% / 楽天等モール経由 手数料25%<br>
+  ※ 赤字は振込手数料（151円）を下回るケース
+</div>
+<script>window.onload = function(){ window.print(); }<\/script>
+</body>
+</html>`;
+
+  const w = window.open("", "_blank");
+  w.document.write(html);
+  w.document.close();
+}
+
+// ============================================================
+// CSVダウンロード
+// ============================================================
+function doCsv() {
+  const shop    = document.getElementById("shop-name").value || "店舗";
+  const email   = document.getElementById("email").value || "";
+  const comment = document.getElementById("comment").value || "";
+  const skus    = getSkus();
+  const now     = new Date().toLocaleString("ja-JP", {timeZone:"Asia/Tokyo"});
+  const AK      = ["avg","south","north","west","far"];
+
+  const h1 = ["作成日時","店舗名","メールアドレス","備考","商品名","サイズ","販売価格（送料込・税込）","受注経路",
+    "参考振込価格（実績の平均）","",
+    "振込価格（南東北～中部）","",
+    "振込価格（北東北・関西）","",
+    "振込価格（中国・四国）","",
+    "振込価格（北海道・九州）",""];
+  const h2 = ["","","","","","","","","送料","手残り","送料","手残り","送料","手残り","送料","手残り","送料","手残り"];
+  const rows = [h1, h2];
+
+  skus.forEach((sku, skuIdx) => {
+    const tbl = sku.isCool ? SHIP_COOL : SHIP_NORMAL, ship = tbl[sku.size] || tbl["60"];
+    rows.push([
+      skuIdx === 0 ? now     : "",
+      skuIdx === 0 ? shop    : "",
+      skuIdx === 0 ? email   : "",
+      skuIdx === 0 ? comment : "",
+      sku.name, sku.size, sku.price, "直送計画",
+      ship.avg,  Math.round(sku.price * 0.8 - ship.avg),
+      ship.south, Math.round(sku.price * 0.8 - ship.south),
+      ship.north, Math.round(sku.price * 0.8 - ship.north),
+      ship.west,  Math.round(sku.price * 0.8 - ship.west),
+      ship.far,   Math.round(sku.price * 0.8 - ship.far),
+    ]);
+    rows.push([
+      "","","","","","","","楽天・Yahoo!",
+      ship.avg,  Math.round(sku.price * 0.75 - ship.avg),
+      ship.south, Math.round(sku.price * 0.75 - ship.south),
+      ship.north, Math.round(sku.price * 0.75 - ship.north),
+      ship.west,  Math.round(sku.price * 0.75 - ship.west),
+      ship.far,   Math.round(sku.price * 0.75 - ship.far),
+    ]);
+  });
+
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "振込価格_" + shop + "_" + new Date().toISOString().slice(0,10) + ".csv";
+  a.click();
+}
+
+document.getElementById("shop-name").addEventListener("input", () => {
+  document.querySelectorAll("#sku-list .sku-card").forEach(card => {
+    const id = card.id.replace("sku-", "");
+    const el = document.getElementById("sname-" + id);
+    if (!el.value) el.placeholder = "例：" + (document.getElementById("shop-name").value.trim() || "直送農園") + " 米2kg";
+  });
+});
+
+addSku();
+</script>
+</body>
+</html>
