@@ -295,7 +295,7 @@ function doPdf() {
     skuBlocks += `
       <div class="sku-block">
         <div class="sku-title">${idx+1}. ${sku.name}
-          <span class="sku-sub">${sku.isCool ? "❄️ クール便" : "常温便"} / ${sku.size}サイズ / 販売価格 ${sku.price.toLocaleString()}円（税込）</span>
+          <span class="sku-sub">${sku.isCool ? "❄️ クール便" : "常温便"} / ${sku.size}サイズ / 販売価格 ${sku.price.toLocaleString()}円（税込・送料込）</span>
         </div>
         <table>
           <thead>
