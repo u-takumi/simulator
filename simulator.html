@@ -203,7 +203,7 @@ function calc() {
     const tbl = sku.isCool ? SHIP_COOL : SHIP_NORMAL, ship = tbl[sku.size] || tbl["60"];
     const block = document.createElement("div"); block.className = "result-sku-block";
     const nameEl = document.createElement("div"); nameEl.className = "result-sku-name";
-    nameEl.innerHTML = "<strong>" + sku.name + "</strong><span style='font-size:11px;color:#999'>" + (sku.isCool ? "❄️ クール便" : "📦 常温便") + " / " + sku.size + "サイズ（税込・送料込）</span>";
+    nameEl.innerHTML = "<strong>" + sku.name + "</strong><span style='font-size:11px;color:#999'>" + (sku.isCool ? "❄️ クール便" : "📦 常温便") + " / " + sku.size + "サイズ（税込）</span>";
     block.appendChild(nameEl);
     const table = document.createElement("table"); table.className = "result-table";
     table.innerHTML = "<thead><tr><th>エリア</th><th>送料</th><th>" + (mode === "forward" ? "販売価格" : "必要販売価格") + "</th><th><span class='tag-c'>本体サイト経由</span> 手取額</th><th><span class='tag-m'>楽天等モール経由</span> 手取額</th></tr></thead>";
@@ -295,7 +295,7 @@ function doPdf() {
     skuBlocks += `
       <div class="sku-block">
         <div class="sku-title">${idx+1}. ${sku.name}
-          <span class="sku-sub">${sku.isCool ? "❄️ クール便" : "常温便"} / ${sku.size}サイズ / 販売価格 ${sku.price.toLocaleString()}円（税込・送料込）</span>
+          <span class="sku-sub">${sku.isCool ? "❄️ クール便" : "常温便"} / ${sku.size}サイズ / 販売価格 ${sku.price.toLocaleString()}円（税込）</span>
         </div>
         <table>
           <thead>
@@ -348,7 +348,7 @@ function doPdf() {
 </div>
 ${skuBlocks}
 <div class="footer">
-  ※ 販売価格はすべて税込・送料込の価格です。<br>  ※ 本体サイト経由（直送計画）手数料20% / 楽天等モール経由 手数料25%<br>
+  ※ 表示価格はすべて税込です。<br>  ※ 本体サイト経由（直送計画）手数料20% / 楽天等モール経由 手数料25%<br>
   ※ 赤字は振込手数料（151円）を下回るケース
 </div>
 <script>window.onload = function(){ window.print(); }<\/script>
