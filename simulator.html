@@ -123,7 +123,7 @@ function addSku() {
     '<div class="sku-card-header"><span class="sku-label">SKU ' + id + '</span><button class="del-btn" onclick="delSku(' + id + ')">×</button></div>' +
     '<div class="sku-grid">' +
     '<div class="field" style="grid-column:1/-1;"><label>SKU名<span class="req">*</span></label><input type="text" placeholder="例：直送農園 米2kg" id="sname-' + id + '" oninput="calc()"></div>' +
-    '<div class="field"><label class="price-label">' + (mode === "forward" ? "販売価格（円）" : "手取額目標（円）") + '<span class="req">*</span></label>' +
+    '<div class="field"><label class="price-label">' + (mode === "forward" ? "販売価格（円／税込・送料込）" : "手取額目標（円／税込）") + '<span class="req">*</span></label>' +
     '<input type="number" placeholder="例：3950" id="sprice-' + id + '" min="10" step="10" oninput="onPriceInput(' + id + ')" required>' +
     '<div class="price-err" id="perr-' + id + '"></div></div>' +
     '<div class="field"><label>配送タイプ<span class="req">*</span></label>' +
