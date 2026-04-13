@@ -277,15 +277,15 @@ function doPdf() {
     rows += "<tr><td class='label'>送料</td><td class='ch'>直送計画</td>";
     AK.forEach(key => { rows += "<td>" + ship[key].toLocaleString() + "円</td>"; });
     rows += "</tr>";
-    // 直送手残り行
-    rows += "<tr><td class='label'>手取り額</td><td class='ch'>直送計画</td>";
+    // 直送手取り額行
+    rows += "<tr><td class='label'>手取り<br>額</td><td class='ch'>直送計画</td>";
     AK.forEach(key => {
       const v = Math.round(sku.price * 0.8 - ship[key]);
       rows += "<td class='" + (v < MIN_TENOKOR ? "warn" : "choku") + "'>" + v.toLocaleString() + "円</td>";
     });
     rows += "</tr>";
-    // モール手残り行
-    rows += "<tr><td class='label'>手取り額</td><td class='ch'>楽天・Yahoo!</td>";
+    // モール手取り額行
+    rows += "<tr><td class='label'>手取り<br>額</td><td class='ch'>楽天・Yahoo!</td>";
     AK.forEach(key => {
       const v = Math.round(sku.price * 0.75 - ship[key]);
       rows += "<td class='" + (v < MIN_TENOKOR ? "warn" : "mall") + "'>" + v.toLocaleString() + "円</td>";
@@ -319,19 +319,19 @@ function doPdf() {
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; font-size: 11pt; color: #222222; padding: 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   h1 { font-size: 15pt; color: #185FA5; border-bottom: 2px solid #185FA5; padding-bottom: 6px; margin-bottom: 10px; }
-  .meta { font-size: 10pt; color: #555555; margin-bottom: 14px; line-height: 1.8; }
+  .meta { font-size: 10pt; color: #222222; margin-bottom: 14px; line-height: 1.8; }
   .sku-block { margin-bottom: 18px; }
   .sku-title { font-size: 12pt; font-weight: bold; color: #185FA5; margin-bottom: 5px; }
-  .sku-sub { font-size: 9pt; font-weight: normal; color: #666666; margin-left: 8px; }
+  .sku-sub { font-size: 9pt; font-weight: normal; color: #333333; margin-left: 8px; }
   table { width: 100%; border-collapse: collapse; font-size: 10pt; table-layout: fixed; }
-  th { background-color: #185FA5; color: #ffffff; padding: 6px 4px; text-align: center; border: 1.5px solid #185FA5; font-size: 9pt; white-space: nowrap; }
-  td { padding: 6px 4px; border: 1px solid #aaaaaa; text-align: right; color: #222222; }
-  td.label { text-align: center; background-color: #f0f4f8; font-weight: bold; white-space: nowrap; color: #222222; width: 50px; }
-  td.ch { text-align: center; font-size: 9pt; white-space: nowrap; color: #222222; width: 80px; }
+  th { background-color: #185FA5; color: #ffffff; padding: 6px 4px; text-align: center; border: 1.5px solid #185FA5; font-size: 9pt; white-space: nowrap; font-weight: bold; }
+  td { padding: 6px 4px; border: 1px solid #aaaaaa; text-align: right; color: #222222; font-weight: bold; }
+  td.label { text-align: center; background-color: #f0f4f8; font-weight: bold; white-space: nowrap; color: #222222; width: 50px; overflow: hidden; }
+  td.ch { text-align: center; font-size: 9pt; white-space: nowrap; color: #222222; font-weight: bold; width: 80px; overflow: hidden; }
   td.choku { background-color: #D6E3BC; font-weight: bold; color: #222222; }
   td.mall { background-color: #FFFFCC; font-weight: bold; color: #222222; }
   td.warn { background-color: #FFE0E0; color: #cc0000; font-weight: bold; }
-  .footer { font-size: 8pt; color: #888888; margin-top: 12px; border-top: 1px solid #cccccc; padding-top: 6px; }
+  .footer { font-size: 8pt; color: #333333; margin-top: 12px; border-top: 1px solid #aaaaaa; padding-top: 6px; }
   @media print {
     body { padding: 0; }
     @page { size: A4 landscape; margin: 10mm; }
