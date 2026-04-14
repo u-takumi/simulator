@@ -80,6 +80,13 @@ input:focus,select:focus{border-color:#185FA5;}
     <div class="field"><label>担当者メールアドレス</label><input type="email" id="email" placeholder="例：shop@example.com"></div>
   </div>
   <div class="sec">SKU情報</div>
+  <div style="margin-bottom:10px;">
+    <label style="display:inline-block;cursor:pointer;background:#f0f4f8;border:1px solid #ccc;border-radius:6px;padding:8px 14px;font-size:13px;font-weight:500;color:#185FA5;">
+      📂 CSVから一括読み込み
+      <input type="file" id="csv-upload" accept=".csv" style="display:none;" onchange="loadCsv(this)">
+    </label>
+    <span style="font-size:11px;color:#999;margin-left:8px;">SKUコード・SKU表示名・売価・温度帯・サイズの列を含むCSVに対応</span>
+  </div>
   <div id="sku-list"></div>
   <div class="hint" style="margin-bottom:6px;">販売価格は10円単位で設定してください（例：3,950円・5,410円）</div>
   <button class="add-btn" onclick="addSku()">+ SKUを追加</button>
@@ -124,6 +131,7 @@ function addSku() {
     '<div class="sku-card-header"><span class="sku-label">SKU ' + id + '</span><button class="del-btn" onclick="delSku(' + id + ')">×</button></div>' +
     '<div class="sku-grid">' +
     '<div class="field" style="grid-column:1/-1;"><label>SKU名<span class="req">*</span></label><input type="text" placeholder="例：直送農園 米2kg" id="sname-' + id + '" oninput="calc()"></div>' +
+    '<div class="field" style="grid-column:1/-1;"><label>SKUコード</label><input type="text" placeholder="例：0039-001-08" id="scode-' + id + '"></div>' +
     '<div class="field"><label class="price-label">' + (mode === "forward" ? "販売価格（円）" : "手取額目標（円）") + '<span class="req">*</span></label>' +
     '<input type="number" placeholder="例：3950" id="sprice-' + id + '" min="10" step="10" oninput="onPriceInput(' + id + ')" required>' +
     '<div class="price-err" id="perr-' + id + '"></div></div>' +
@@ -176,7 +184,8 @@ function updateDelBtns() {
 function getSkus() {
   return Array.from(document.querySelectorAll("#sku-list .sku-card")).map(card => {
     const id = card.id.replace("sku-", "");
-    return { id, name: document.getElementById("sname-" + id).value, price: parseFloat(document.getElementById("sprice-" + id).value), isCool: card._isCool || false, size: document.getElementById("ssize-" + id).value };
+    const codeEl = document.getElementById("scode-" + id);
+    return { id, code: codeEl ? codeEl.value : "", name: document.getElementById("sname-" + id).value, price: parseFloat(document.getElementById("sprice-" + id).value), isCool: card._isCool || false, size: document.getElementById("ssize-" + id).value };
   }).filter(s => s.name && s.price > 0 && s.price % 10 === 0);
 }
 function getAllSkuCards() {
@@ -255,6 +264,7 @@ function updateAlerts(skus, anyWarn) {
 function showConfirm() {
   if (document.getElementById("confirm-btn").disabled) return;
   document.getElementById("confirm-sec").style.display = "block";
+  document.getElementById("confirm-btn").style.display = "none";
   document.getElementById("confirm-sec").scrollIntoView({ behavior: "smooth" });
 }
 
@@ -295,7 +305,7 @@ function doPdf() {
 
     skuBlocks += `
       <div class="sku-block">
-        <div class="sku-title">${idx+1}. ${sku.name}
+        <div class="sku-title">${idx+1}. ${sku.name}${sku.code ? ' <span style="font-size:9pt;font-weight:normal;color:#333">［' + sku.code + '］</span>' : ''}
           <span class="sku-sub">${sku.isCool ? "❄️ クール便" : "常温便"} / ${sku.size}サイズ / 販売価格 ${sku.price.toLocaleString()}円（税込・送料込）</span>
         </div>
         <table>
@@ -420,6 +430,95 @@ document.getElementById("shop-name").addEventListener("input", () => {
     if (!el.value) el.placeholder = "例：" + (document.getElementById("shop-name").value.trim() || "直送農園") + " 米2kg";
   });
 });
+
+
+// ============================================================
+// CSV読み込み
+// ============================================================
+function loadCsv(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let text = e.target.result;
+    // BOM除去
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) { alert("データが見つかりません"); return; }
+
+    // ヘッダー解析
+    const headers = parseCsvLine(lines[0]);
+    const idxCode  = headers.findIndex(h => h.includes("SKUコード") || h.includes("sku") || h.toLowerCase().includes("code"));
+    const idxName  = headers.findIndex(h => h.includes("SKU表示名") || h.includes("商品名") || h.includes("name"));
+    const idxPrice = headers.findIndex(h => h.includes("売価") || h.includes("価格") || h.includes("price"));
+    const idxTemp  = headers.findIndex(h => h.includes("温度帯") || h.includes("配送"));
+    const idxSize  = headers.findIndex(h => h.includes("サイズ") || h.includes("size"));
+
+    if (idxName < 0 || idxPrice < 0) {
+      alert("SKU表示名・売価の列が見つかりません。\nCSVの列名を確認してください。");
+      return;
+    }
+
+    // 既存SKUをクリア
+    document.getElementById("sku-list").innerHTML = "";
+    skuCount = 0;
+
+    // データ行を追加
+    let added = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCsvLine(lines[i]);
+      if (!cols || cols.length < 2) continue;
+      const name  = idxName  >= 0 ? cols[idxName]  : "";
+      const price = idxPrice >= 0 ? parseInt(cols[idxPrice].replace(/[^0-9]/g, "")) : 0;
+      const temp  = idxTemp  >= 0 ? cols[idxTemp]  : "常温";
+      const size  = idxSize  >= 0 ? cols[idxSize].replace(/[^0-9]/g, "") : "60";
+      const code  = idxCode  >= 0 ? cols[idxCode]  : "";
+      if (!name || !price) continue;
+
+      addSku();
+      const id = skuCount;
+      document.getElementById("sname-" + id).value  = name;
+      document.getElementById("sprice-" + id).value = price;
+      if (document.getElementById("scode-" + id)) document.getElementById("scode-" + id).value = code;
+
+      // 温度帯設定
+      const isCool = temp.includes("クール") || temp.toLowerCase().includes("cool");
+      if (isCool) setCool(id, true);
+
+      // サイズ設定
+      const validSizes = ["60","80","100","120","140","160"];
+      const sizeVal = validSizes.includes(size) ? size : "60";
+      const sel = document.getElementById("ssize-" + id);
+      if (sel) sel.value = sizeVal;
+
+      onPriceInput(id);
+      added++;
+    }
+    alert(added + " 件のSKUを読み込みました。");
+    input.value = "";
+  };
+  reader.readAsText(file, "Shift-JIS");
+}
+
+function parseCsvLine(line) {
+  const result = [];
+  let current = "";
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuote && line[i+1] === '"') { current += '"'; i++; }
+      else { inQuote = !inQuote; }
+    } else if (ch === "," && !inQuote) {
+      result.push(current.trim());
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
 
 addSku();
 </script>
