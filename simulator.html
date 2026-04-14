@@ -136,9 +136,9 @@ function addSku() {
     '<input type="number" placeholder="例：3950" id="sprice-' + id + '" min="10" step="10" oninput="onPriceInput(' + id + ')" required>' +
     '<div class="price-err" id="perr-' + id + '"></div></div>' +
     '<div class="field"><label>配送タイプ<span class="req">*</span></label>' +
-    '<div class="cool-toggle"><button class="cool-btn active" id="btn-normal-' + id + '" onclick="setDelivery(' + id + ',''normal'')">常温</button>' +
-    '<button class="cool-btn" id="btn-reizo-' + id + '" onclick="setDelivery(' + id + ',''reizo'')">冷蔵</button>' +
-    '<button class="cool-btn" id="btn-reito-' + id + '" onclick="setDelivery(' + id + ',''reito'')">冷凍</button></div></div>' +
+    '<div class="cool-toggle"><button class="cool-btn active" id="btn-normal-' + id + '" onclick="setDelivery(' + id + ', \"normal\")">常温</button>' +
+    '<button class="cool-btn" id="btn-reizo-' + id + '" onclick="setDelivery(' + id + ', \"reizo\")">冷蔵</button>' +
+    '<button class="cool-btn" id="btn-reito-' + id + '" onclick="setDelivery(' + id + ', \"reito\")">冷凍</button></div></div>' +
     '<div class="field"><label>梱包サイズ<span class="req">*</span></label>' +
     '<select id="ssize-' + id + '" onchange="onPriceInput(' + id + ')">' +
     '<option value="60">60サイズ</option><option value="80">80サイズ</option><option value="100">100サイズ</option>' +
