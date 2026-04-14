@@ -290,7 +290,7 @@ function doPdf() {
   skus.forEach((sku, idx) => {
     const tbl = sku.isCool ? SHIP_COOL : SHIP_NORMAL, ship = tbl[sku.size] || tbl["60"];
     let rows = "";
-    rows += "<tr><td class='label'>送料</td><td class='ch'>直送計画</td>";
+    rows += "<tr><td class='label'>送料</td><td class='ch'>共通</td>";
     AK.forEach(key => { rows += "<td>" + ship[key].toLocaleString() + "円</td>"; });
     rows += "</tr>";
     rows += "<tr><td class='label'>手取額</td><td class='ch'>直送計画</td>";
@@ -299,7 +299,7 @@ function doPdf() {
       rows += "<td class='" + (v < MIN_TENOKOR ? "warn" : "choku") + "'>" + v.toLocaleString() + "円</td>";
     });
     rows += "</tr>";
-    rows += "<tr><td class='label'>手取額</td><td class='ch'>楽天・Yahoo!</td>";
+    rows += "<tr><td class='label'>手取額</td><td class='ch'>楽天等モール</td>";
     AK.forEach(key => {
       const v = Math.round(sku.price * 0.75 - ship[key]);
       rows += "<td class='" + (v < MIN_TENOKOR ? "warn" : "mall") + "'>" + v.toLocaleString() + "円</td>";
@@ -414,38 +414,21 @@ function doCsv() {
   const comment = document.getElementById("comment").value || "";
   const skus    = getSkus();
   const now     = new Date().toLocaleString("ja-JP", {timeZone:"Asia/Tokyo"});
-  const AK      = ["avg","south","north","west","far"];
 
-  const h1 = ["作成日時","店舗名","メールアドレス","備考","商品名","サイズ","販売価格（送料込・税込）","受注経路",
-    "参考振込価格（実績の平均）","",
-    "振込価格（南東北～中部）","",
-    "振込価格（北東北・関西）","",
-    "振込価格（中国・四国）","",
-    "振込価格（北海道・九州）",""];
-  const h2 = ["","","","","","","","","送料","手残り","送料","手残り","送料","手残り","送料","手残り","送料","手残り"];
-  const rows = [h1, h2];
+  const headers = ["作成日時","店舗名","メールアドレス","備考","SKUコード","SKU名","販売価格（税込）","便種","サイズ"];
+  const rows = [headers];
 
   skus.forEach((sku, skuIdx) => {
-    const tbl = sku.isCool ? SHIP_COOL : SHIP_NORMAL, ship = tbl[sku.size] || tbl["60"];
     rows.push([
       skuIdx === 0 ? now     : "",
       skuIdx === 0 ? shop    : "",
       skuIdx === 0 ? email   : "",
       skuIdx === 0 ? comment : "",
-      sku.name, sku.size, sku.price, "直送計画",
-      ship.avg,  Math.round(sku.price * 0.8 - ship.avg),
-      ship.south, Math.round(sku.price * 0.8 - ship.south),
-      ship.north, Math.round(sku.price * 0.8 - ship.north),
-      ship.west,  Math.round(sku.price * 0.8 - ship.west),
-      ship.far,   Math.round(sku.price * 0.8 - ship.far),
-    ]);
-    rows.push([
-      "","","","","","","","楽天・Yahoo!",
-      ship.avg,  Math.round(sku.price * 0.75 - ship.avg),
-      ship.south, Math.round(sku.price * 0.75 - ship.south),
-      ship.north, Math.round(sku.price * 0.75 - ship.north),
-      ship.west,  Math.round(sku.price * 0.75 - ship.west),
-      ship.far,   Math.round(sku.price * 0.75 - ship.far),
+      sku.code || "-",
+      sku.name,
+      sku.price,
+      sku.deliveryLabel,
+      sku.size,
     ]);
   });
 
